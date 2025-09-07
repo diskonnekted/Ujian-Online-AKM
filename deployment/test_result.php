@@ -41,18 +41,6 @@ $query = "SELECT q.id, q.pertanyaan, q.pilihan_a, q.pilihan_b, q.pilihan_c, q.pi
                  ua.jawaban_kompleks, 
                  CASE 
                      WHEN q.tipe_soal = 'essay' THEN 0
-                     WHEN q.tipe_soal = 'benar_salah' THEN 
-                         CASE 
-                             WHEN (ua.jawaban = 'benar' AND q.jawaban_benar = 'a') OR 
-                                  (ua.jawaban = 'salah' AND q.jawaban_benar = 'b') OR 
-                                  (ua.jawaban = q.jawaban_benar) THEN 1
-                             ELSE 0
-                         END
-                     WHEN q.tipe_soal = 'pilihan_ganda_kompleks' THEN 
-                         CASE 
-                             WHEN ua.jawaban_kompleks = q.jawaban_benar THEN 1
-                             ELSE 0
-                         END
                      WHEN ua.jawaban = q.jawaban_benar THEN 1 
                      ELSE 0 
                  END as is_correct
@@ -439,7 +427,7 @@ $score = ($total_questions > 0) ? round(($correct_answers / $total_questions) * 
                 
                 <div class="question-item <?php echo $status_class; ?>">
                     <div class="question-number">Soal <?php echo $index + 1; ?> - <?php echo ucfirst(str_replace('_', ' ', $question['tipe_soal'])); ?></div>
-                    <div class="question-text"><?php echo htmlspecialchars($question['pertanyaan'] ?? ''); ?></div>
+                    <div class="question-text"><?php echo htmlspecialchars($question['pertanyaan']); ?></div>
                     
                     <?php if ($question['tipe_soal'] == 'essay'): ?>
                         <!-- Tampilan untuk Essay -->
@@ -447,7 +435,7 @@ $score = ($total_questions > 0) ? round(($correct_answers / $total_questions) * 
                             <div class="essay-label">Jawaban Anda:</div>
                             <div class="essay-content">
                                 <?php if (!empty($question['jawaban_user'])): ?>
-                                    <?php echo nl2br(htmlspecialchars($question['jawaban_user'] ?? '')); ?>
+                                    <?php echo nl2br(htmlspecialchars($question['jawaban_user'])); ?>
                                 <?php else: ?>
                                     <em>Tidak ada jawaban</em>
                                 <?php endif; ?>
@@ -457,136 +445,21 @@ $score = ($total_questions > 0) ? round(($correct_answers / $total_questions) * 
                         <div class="answer-status status-pending">
                             Status: Menunggu Penilaian Manual
                         </div>
-                    <?php elseif ($question['tipe_soal'] == 'benar_salah'): ?>
-                        <!-- Tampilan untuk Benar/Salah -->
-                        <div class="options">
-                            <div class="option <?php echo ($question['jawaban_benar'] == 'a') ? 'correct' : ''; ?> <?php echo ($question['jawaban_user'] == 'benar' || $question['jawaban_user'] == 'a') ? 'user-answer' : ''; ?>">
-                                 A. Benar
-                             </div>
-                             <div class="option <?php echo ($question['jawaban_benar'] == 'b') ? 'correct' : ''; ?> <?php echo ($question['jawaban_user'] == 'salah' || $question['jawaban_user'] == 'b') ? 'user-answer' : ''; ?>">
-                                 B. Salah
-                             </div>
-                        </div>
-                        
-                        <div class="answer-status status-<?php echo $status_class; ?>">
-                            Status: <?php echo $status_text; ?>
-                            <?php if (!empty($question['jawaban_user'])): ?>
-                                | Jawaban Anda: <?php echo ucfirst($question['jawaban_user']); ?>
-                            <?php endif; ?>
-                            | Jawaban Benar: <?php echo ($question['jawaban_benar'] == 'a') ? 'Benar' : 'Salah'; ?>
-                        </div>
-                    <?php elseif ($question['tipe_soal'] == 'urutan'): ?>
-                        <!-- Tampilan untuk Urutan -->
-                        <div class="essay-answer">
-                            <div class="essay-label">Jawaban Anda (Urutan):</div>
-                            <div class="essay-content">
-                                <?php if (!empty($question['jawaban_kompleks'])): ?>
-                                    <?php 
-                                    $jawaban_urutan = json_decode($question['jawaban_kompleks'], true);
-                                    if ($jawaban_urutan && is_array($jawaban_urutan)) {
-                                        echo implode(' → ', array_map('htmlspecialchars', $jawaban_urutan));
-                                    } else {
-                                        echo htmlspecialchars($question['jawaban_kompleks']);
-                                    }
-                                    ?>
-                                <?php else: ?>
-                                    <em>Tidak ada jawaban</em>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        
-                        <div class="essay-answer">
-                            <div class="essay-label">Jawaban Benar (Urutan):</div>
-                            <div class="essay-content">
-                                <?php 
-                                $jawaban_benar_urutan = json_decode($question['jawaban_benar'], true);
-                                if ($jawaban_benar_urutan && is_array($jawaban_benar_urutan)) {
-                                    echo implode(' → ', array_map('htmlspecialchars', $jawaban_benar_urutan));
-                                } else {
-                                    echo htmlspecialchars($question['jawaban_benar']);
-                                }
-                                ?>
-                            </div>
-                        </div>
-                        
-                        <div class="answer-status status-pending">
-                             Status: Menunggu Penilaian Manual
-                         </div>
-                     <?php elseif ($question['tipe_soal'] == 'pilihan_ganda_kompleks'): ?>
-                         <!-- Tampilan untuk Pilihan Ganda Kompleks -->
-                         <div class="options">
-                             <?php 
-                             if (!empty($question['pilihan_jawaban'])) {
-                                 $pilihan_data = json_decode($question['pilihan_jawaban'], true);
-                                 $jawaban_user_array = !empty($question['jawaban_kompleks']) ? json_decode($question['jawaban_kompleks'], true) : [];
-                                 $jawaban_benar_array = !empty($question['jawaban_benar']) ? json_decode($question['jawaban_benar'], true) : [];
-                                 
-                                 if ($pilihan_data && is_array($pilihan_data)) {
-                                     foreach ($pilihan_data as $key => $value) {
-                                         $option_key = strtoupper($key);
-                                         $is_correct = (is_array($jawaban_benar_array) && in_array($option_key, $jawaban_benar_array)) ? 'correct' : '';
-                                         $is_user_answer = (is_array($jawaban_user_array) && in_array($option_key, $jawaban_user_array)) ? 'user-answer' : '';
-                                         echo "<div class='option $is_correct $is_user_answer'>";
-                                         echo "$option_key. " . htmlspecialchars($value ?? '');
-                                         echo "</div>";
-                                     }
-                                 }
-                             }
-                             ?>
-                         </div>
-                         
-                         <div class="answer-status status-<?php echo $status_class; ?>">
-                             Status: <?php echo $status_text; ?>
-                             <?php if (!empty($question['jawaban_kompleks'])): ?>
-                                 <?php 
-                                 $jawaban_user_display = json_decode($question['jawaban_kompleks'], true);
-                                 if (is_array($jawaban_user_display)) {
-                                     echo '| Jawaban Anda: ' . implode(', ', $jawaban_user_display);
-                                 }
-                                 ?>
-                             <?php endif; ?>
-                             <?php 
-                             $jawaban_benar_display = json_decode($question['jawaban_benar'], true);
-                             if (is_array($jawaban_benar_display)) {
-                                 echo '| Jawaban Benar: ' . implode(', ', $jawaban_benar_display);
-                             } else {
-                                 echo '| Jawaban Benar: ' . $question['jawaban_benar'];
-                             }
-                             ?>
-                         </div>
-                     <?php else: ?>
+                    <?php else: ?>
                         <!-- Tampilan untuk Pilihan Ganda -->
                         <div class="options">
-                            <?php 
-                            // Cek apakah menggunakan format pilihan_jawaban JSON atau kolom terpisah
-                            if (!empty($question['pilihan_jawaban'])) {
-                                $pilihan_data = json_decode($question['pilihan_jawaban'], true);
-                                if ($pilihan_data && is_array($pilihan_data)) {
-                                    foreach ($pilihan_data as $key => $value) {
-                                        $option_key = strtoupper($key);
-                                        $is_correct = ($question['jawaban_benar'] == $option_key) ? 'correct' : '';
-                                        $is_user_answer = ($question['jawaban_user'] == $option_key) ? 'user-answer' : '';
-                                        echo "<div class='option $is_correct $is_user_answer'>";
-                                        echo "$option_key. " . htmlspecialchars($value ?? '');
-                                        echo "</div>";
-                                    }
-                                }
-                            } else {
-                                // Format lama dengan kolom terpisah
-                            ?>
                             <div class="option <?php echo ($question['jawaban_benar'] == 'A') ? 'correct' : ''; ?> <?php echo ($question['jawaban_user'] == 'A') ? 'user-answer' : ''; ?>">
-                                A. <?php echo htmlspecialchars($question['pilihan_a'] ?? ''); ?>
+                                A. <?php echo htmlspecialchars($question['pilihan_a']); ?>
                             </div>
                             <div class="option <?php echo ($question['jawaban_benar'] == 'B') ? 'correct' : ''; ?> <?php echo ($question['jawaban_user'] == 'B') ? 'user-answer' : ''; ?>">
-                                B. <?php echo htmlspecialchars($question['pilihan_b'] ?? ''); ?>
+                                B. <?php echo htmlspecialchars($question['pilihan_b']); ?>
                             </div>
                             <div class="option <?php echo ($question['jawaban_benar'] == 'C') ? 'correct' : ''; ?> <?php echo ($question['jawaban_user'] == 'C') ? 'user-answer' : ''; ?>">
-                                C. <?php echo htmlspecialchars($question['pilihan_c'] ?? ''); ?>
+                                C. <?php echo htmlspecialchars($question['pilihan_c']); ?>
                             </div>
                             <div class="option <?php echo ($question['jawaban_benar'] == 'D') ? 'correct' : ''; ?> <?php echo ($question['jawaban_user'] == 'D') ? 'user-answer' : ''; ?>">
-                                D. <?php echo htmlspecialchars($question['pilihan_d'] ?? ''); ?>
+                                D. <?php echo htmlspecialchars($question['pilihan_d']); ?>
                             </div>
-                            <?php } ?>
                         </div>
                         
                         <div class="answer-status status-<?php echo $status_class; ?>">

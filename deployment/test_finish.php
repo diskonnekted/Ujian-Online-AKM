@@ -84,8 +84,8 @@ foreach ($user_answers as $answer) {
             break;
             
         case 'pilihan_ganda_kompleks':
-            $user_answers_array = json_decode($answer['jawaban_kompleks'] ?? '', true) ?: [];
-            $correct_answers_array = json_decode($answer['jawaban_benar_kompleks'] ?? '', true) ?: [];
+            $user_answers_array = json_decode($answer['jawaban_kompleks'], true) ?: [];
+            $correct_answers_array = json_decode($answer['jawaban_benar_kompleks'], true) ?: [];
             
             // Hitung partial scoring untuk pilihan ganda kompleks
             if (!empty($user_answers_array) && !empty($correct_answers_array)) {
@@ -129,8 +129,8 @@ foreach ($user_answers as $answer) {
             break;
             
         case 'urutan':
-            $user_sequence = json_decode($answer['jawaban_kompleks'] ?? '', true) ?: [];
-            $correct_sequence = json_decode($answer['jawaban_benar_kompleks'] ?? '', true) ?: [];
+            $user_sequence = json_decode($answer['jawaban_kompleks'], true) ?: [];
+            $correct_sequence = json_decode($answer['jawaban_benar_kompleks'], true) ?: [];
             
             if ($user_sequence === $correct_sequence) {
                 $is_correct = true;

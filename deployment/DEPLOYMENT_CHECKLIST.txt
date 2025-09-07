@@ -1,0 +1,118 @@
+=== CHECKLIST DEPLOYMENT APLIKASI AKM ===
+Domain: akm.orbitdev.id
+Database: orb44008_akm
+User: orb44008_akm
+Password: Dirumah@5474
+
+[ ] 1. PERSIAPAN FILE
+    [ ] Folder deployment sudah berisi semua file aplikasi
+    [ ] File orb44008_akm.sql sudah dibuat
+    [ ] Konfigurasi database.php sudah diupdate
+    [ ] File .htaccess sudah dibuat
+
+[ ] 2. UPLOAD FILE KE HOSTING
+    [ ] Login ke cPanel hosting
+    [ ] Buka File Manager
+    [ ] Masuk ke folder public_html
+    [ ] Upload semua file dari folder deployment
+    [ ] Pastikan struktur folder benar:
+        - index.php di root
+        - folder admin/ ada
+        - folder config/ ada
+        - folder images/ ada
+    [ ] Set permission folder ke 755
+    [ ] Set permission file PHP ke 644
+
+[ ] 3. SETUP DATABASE
+    [ ] Login ke phpMyAdmin
+    [ ] Buat database 'orb44008_akm' (jika belum ada)
+    [ ] Import file orb44008_akm.sql
+    [ ] Verifikasi tabel sudah terbuat:
+        - users
+        - admins
+        - subjects
+        - tests
+        - questions
+        - test_sessions
+        - user_answers
+    [ ] Verifikasi data default sudah ada
+
+[ ] 4. TESTING APLIKASI
+    [ ] Akses https://akm.orbitdev.id
+    [ ] Halaman utama muncul tanpa error
+    [ ] Test login siswa:
+        Username: P130100230
+        Password: password123
+    [ ] Test login admin:
+        URL: https://akm.orbitdev.id/admin/
+        Username: admin
+        Password: admin123
+    [ ] Test fitur utama:
+        [ ] Dashboard siswa
+        [ ] Mulai tes
+        [ ] Dashboard admin
+        [ ] Manajemen soal
+        [ ] Laporan hasil
+        [ ] SOAL MUNCUL DENGAN BENAR (penting!)
+
+[ ] 4.1. TROUBLESHOOTING SOAL TIDAK MUNCUL
+    Jika soal tidak muncul di hosting:
+    [ ] CEK VERSI PHP dengan php_version_check.php (PENTING!)
+    [ ] Pastikan PHP minimal versi 7.4.0
+    [ ] Cek kompatibilitas dengan check_php_compatibility.php
+    [ ] Test sederhana dengan test_questions_simple.php
+    [ ] Akses check_config.php untuk cek koneksi database
+    [ ] Akses debug_database.php untuk cek data
+    [ ] Cek apakah tabel questions berisi data
+    [ ] Cek apakah foreign key test_id valid
+    [ ] Gunakan quick_fix.php jika diperlukan
+    [ ] Baca TROUBLESHOOTING_SOAL.md untuk panduan lengkap
+
+[ ] 5. KONFIGURASI KEAMANAN
+    [ ] Ganti password admin default
+    [ ] Aktifkan SSL (HTTPS)
+    [ ] Backup database
+    [ ] Test semua fitur sekali lagi
+
+[ ] 6. DOKUMENTASI
+    [ ] Catat URL akses:
+        - Siswa: https://akm.orbitdev.id
+        - Admin: https://akm.orbitdev.id/admin/
+    [ ] Catat kredensial default
+    [ ] Simpan backup database
+
+=== KREDENSIAL DEFAULT ===
+
+ADMIN:
+- Username: admin
+- Password: password (DEFAULT) atau admin123 (SETELAH FIX)
+- Role: Administrator
+- CATATAN: Jika login gagal dengan admin123, gunakan 'password' atau jalankan fix_admin_password.php
+
+- Username: teacher1
+- Password: teacher123
+- Role: Teacher
+
+SISWA:
+- Username: P130100230
+- Password: password123
+- Nama: Peserta 01
+
+- Username: agus
+- Password: agus123
+- Nama: Agus Setiawan
+
+=== TROUBLESHOOTING ===
+
+Jika ada error:
+1. Cek error log di cPanel
+2. Verifikasi kredensial database
+3. Pastikan semua file terupload
+4. Cek permission file/folder
+5. Pastikan database sudah diimport
+
+=== SELESAI ===
+Tanggal deployment: ___________
+Deployed by: ___________
+Status: [ ] Berhasil [ ] Ada masalah
+Catatan: ________________________

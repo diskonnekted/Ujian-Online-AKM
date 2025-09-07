@@ -41,18 +41,45 @@ $stmt->bindParam(':test_id', $session['test_id']);
 $stmt->execute();
 $questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Ambil nomor soal saat ini
-$current_question = isset($_GET['q']) ? (int)$_GET['q'] : 1;
-
-// Validasi nomor soal berdasarkan data yang tersedia
-if ($current_question > count($questions)) {
-    // Redirect ke soal terakhir yang tersedia
-    $last_question = count($questions);
-    header("Location: test_page.php?token=$token&q=$last_question");
+// Debug: Cek apakah soal ditemukan
+if (empty($questions)) {
+    echo "<div style='padding: 20px; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; margin: 10px;'>";
+    echo "<h3>Debug Info:</h3>";
+    echo "<p>Test ID: " . $session['test_id'] . "</p>";
+    echo "<p>Jumlah soal ditemukan: " . count($questions) . "</p>";
+    
+    // Cek apakah ada soal di database
+    $debug_query = "SELECT COUNT(*) as total FROM questions";
+    $debug_stmt = $conn->prepare($debug_query);
+    $debug_stmt->execute();
+    $total_questions = $debug_stmt->fetch(PDO::FETCH_ASSOC);
+    echo "<p>Total soal di database: " . $total_questions['total'] . "</p>";
+    
+    // Cek soal untuk test_id tertentu
+    $debug_query2 = "SELECT id, nomor_soal, pertanyaan FROM questions WHERE test_id = :test_id";
+    $debug_stmt2 = $conn->prepare($debug_query2);
+    $debug_stmt2->bindParam(':test_id', $session['test_id']);
+    $debug_stmt2->execute();
+    $debug_questions = $debug_stmt2->fetchAll(PDO::FETCH_ASSOC);
+    echo "<p>Soal untuk test_id " . $session['test_id'] . ": " . count($debug_questions) . "</p>";
+    
+    if (!empty($debug_questions)) {
+        echo "<ul>";
+        foreach ($debug_questions as $dq) {
+            echo "<li>ID: " . $dq['id'] . ", Nomor: " . $dq['nomor_soal'] . ", Pertanyaan: " . substr($dq['pertanyaan'], 0, 50) . "...</li>";
+        }
+        echo "</ul>";
+    }
+    echo "</div>";
+    
+    echo "<p><a href='dashboard.php'>Kembali ke Dashboard</a></p>";
     exit();
 }
 
+// Ambil nomor soal saat ini
+$current_question = isset($_GET['q']) ? (int)$_GET['q'] : 1;
 $current_question = max(1, min($current_question, count($questions)));
+
 $question = $questions[$current_question - 1];
 
 // Ambil jawaban yang sudah disimpan
@@ -281,13 +308,13 @@ $remaining_time = max(0, $duration_seconds - $elapsed_time);
         }
         
         .answer-options {
-            margin-bottom: 30px;
+            margin: 30px 0;
         }
         
         .option {
             display: block;
-            margin-bottom: 15px;
             padding: 0;
+            margin: 15px 0;
             border: none;
             border-radius: 0;
             cursor: pointer;
@@ -304,9 +331,9 @@ $remaining_time = max(0, $duration_seconds - $elapsed_time);
             padding: 18px 25px;
             border: 2px solid #e2e8f0;
             border-radius: 12px;
-            color: #2d3748;
             font-size: 16px;
             line-height: 1.5;
+            color: #2d3748;
             background: white;
             transition: all 0.3s;
             position: relative;
@@ -730,7 +757,7 @@ $remaining_time = max(0, $duration_seconds - $elapsed_time);
                     <?php elseif ($question['tipe_soal'] == 'pilihan_ganda_kompleks'): ?>
                         <?php 
                         $options = json_decode($question['pilihan_jawaban'], true);
-                        $saved_kompleks = ($saved_answer && isset($saved_answer['jawaban_kompleks'])) ? json_decode($saved_answer['jawaban_kompleks'], true) : [];
+                        $saved_kompleks = $saved_answer ? json_decode($saved_answer['jawaban_kompleks'], true) : [];
                         if ($options):
                             foreach ($options as $key => $option):
                         ?>
@@ -761,7 +788,7 @@ $remaining_time = max(0, $duration_seconds - $elapsed_time);
                             <div class="drop-zone" id="dropZone">
                                 <span class="drop-text">Seret jawaban ke sini</span>
                             </div>
-                            <input type="hidden" name="drag_drop_answer" id="dragDropAnswer" value="<?php echo ($saved_answer && isset($saved_answer['jawaban_kompleks'])) ? htmlspecialchars($saved_answer['jawaban_kompleks']) : ''; ?>">
+                            <input type="hidden" name="drag_drop_answer" id="dragDropAnswer" value="<?php echo $saved_answer ? htmlspecialchars($saved_answer['jawaban_kompleks']) : ''; ?>">
                         </div>
                     
                     <?php elseif ($question['tipe_soal'] == 'urutan'): ?>
@@ -769,7 +796,7 @@ $remaining_time = max(0, $duration_seconds - $elapsed_time);
                             <div class="sequence-items" id="sequenceItems">
                                 <?php 
                                 $sequence_items = json_decode($question['pilihan_jawaban'], true);
-                                $saved_sequence = ($saved_answer && isset($saved_answer['jawaban_kompleks'])) ? json_decode($saved_answer['jawaban_kompleks'], true) : [];
+                                $saved_sequence = $saved_answer ? json_decode($saved_answer['jawaban_kompleks'], true) : [];
                                 if ($sequence_items):
                                     // Jika ada jawaban tersimpan, gunakan urutan tersebut
                                     if (!empty($saved_sequence)) {
@@ -796,7 +823,7 @@ $remaining_time = max(0, $duration_seconds - $elapsed_time);
                                 endif; 
                                 ?>
                             </div>
-                            <input type="hidden" name="sequence_answer" id="sequenceAnswer" value="<?php echo ($saved_answer && isset($saved_answer['jawaban_kompleks'])) ? htmlspecialchars($saved_answer['jawaban_kompleks']) : ''; ?>">
+                            <input type="hidden" name="sequence_answer" id="sequenceAnswer" value="<?php echo $saved_answer ? htmlspecialchars($saved_answer['jawaban_kompleks']) : ''; ?>">
                         </div>
                     
                     <?php elseif ($question['tipe_soal'] == 'essay'): ?>
